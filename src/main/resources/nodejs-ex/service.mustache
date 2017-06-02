@@ -1,0 +1,61 @@
+'use strict';
+
+{{#operations}}
+{{#operation}}
+exports.{{{operationId}}} = function(args, res, next) {
+  /**
+   {{#summary}}
+   * {{{summary}}}
+   {{/summary}}
+   {{#notes}}
+   * {{{notes}}}
+   {{/notes}}
+   *
+  {{#allParams}}
+   * {{paramName}} {{{dataType}}} {{{description}}}{{^required}} (optional){{/required}}
+  {{/allParams}}
+  {{^returnType}}
+   * no response value expected for this operation
+  {{/returnType}}
+  {{#returnType}}
+   * returns {{{returnType}}}
+  {{/returnType}}
+   **/
+  {{#returnType}}
+  var examples = {};
+  {{#examples}}
+  examples['{{contentType}}'] = {{{example}}};
+  {{/examples}}
+  // Obtain request params.
+  var params = {};
+  var query = args._parsedUrl.query;
+  if (query != null) {
+    query.split('&')
+      .map(function(e) { return e.split('='); })
+      .forEach(function(e) { params[e[0]] = e[1];});
+  }
+  // Create response
+  if (params['error'] != undefined) {
+    // Use examples definition in swagger.
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = params['error'];
+      var response = args.swagger.path[args.method.toLowerCase()].responses[params.error];
+      if (response != undefined && response.examples != undefined) {
+        res.end(JSON.stringify(response.examples || {}, null, 2));
+      } else {
+        res.end();
+      }
+  } else if (Object.keys(examples).length > 0) {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(examples[Object.keys(examples)[0]] || {}, null, 2));
+  } else {
+    res.end();
+  }
+  {{/returnType}}
+  {{^returnType}}
+  res.end();
+  {{/returnType}}
+}
+
+{{/operation}}
+{{/operations}}
